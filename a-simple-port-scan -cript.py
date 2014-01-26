@@ -17,7 +17,6 @@ threads = []#把线程实例t组成存储list类型
 
 def scan(port):
 	try:
-		#socket.socket.settimeout(5)
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		sock.settimeout(5)#设置超时时间
 		result = sock.connect_ex((Host, port))
