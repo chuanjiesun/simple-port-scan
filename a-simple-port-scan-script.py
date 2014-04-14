@@ -1,3 +1,5 @@
+###############这是个判断端口开放的简单脚本#########################
+###############如果需要详细的信息，请使用下面使用nmap库扫描的脚本（100行后面）##########
 import threading, socket, sys
 from time import ctime, time
 
@@ -87,8 +89,90 @@ if __name__ == '__main__':
 		sys.exit()
 	#对于time()函数返回float类型，只取两位小数  具体更多用法查format()
 	#{:.2f}与{0:.2f}结果一样
-	
-		
-	
 
+
+
+
+
+
+
+		
+#######################################nmap扫描版本###########################################
+'''
+python3.3 py-nmap.py -H 192.168.1.10-20 -p 21-1000 
+python3.3 py-nmap.py -H 192.168.1.10-20 -p 21-1000 [--arg="-Pn -sV --open"]
+python3.3 py-nmap.py -H 192.168.1.10-20 -p cg [--arg="-Pn -sV --open"]#常见端口扫描,可以自定义端口cg_ports
+python3.3 py-nmap.py -H 192.168.1.10-20 -p 21-80,3306  [--arg="-Pn -sV --open"]
+python3.3 py-nmap.py -H 192.168.1.10-20,111.123.23.3 -p 21-1000 [--arg="-Pn -sV --open"]
+
+'''
+import socket, sys
+from nmap import nmap
+import argparse
+from urllib import request
+
+cg_ports = [21,22,23,25,53,80,81,110,119,139,143,161,443,445,513,514,587,873,1433,1434,1521,3306,3307,3389,3690,5432,6000,6001,7001,7071,8008,8080,8088,10050,10051]
+
+def main():
+	parser = argparse.ArgumentParser(description = 'this is a test message', 
+	usage=''' %(prog)s [options]\
+		\nyou need tpo specify a host and a port\
+		\nexample: %(prog)s -H 192.168.1.1 -p  80 [--arg="-Pn -sUV"]
+	''')
+	parser.add_argument('-H', dest = 'host', help = 'specify a hostname')
+	parser.add_argument('-p', dest = 'port',  help = 'specify a port number, [cg:common port,others you should specify]')
+	parser.add_argument('--arg', dest = 'arguments', nargs='?', type = str, help = 'specify a argument[default:-sV]')#nargs设置可选的参数
+	args = parser.parse_args()
+	if not args.host or not args.port:
+		parser.print_help()
+		sys.exit(1)
+	print('args is ',args)
+	Host = args.host
+	if args.port == 'cg':
+		Port = cg_ports
+	else:
+		Port = args.port
+	if args.arguments is None:
+		arg = '-sV'
+		print('使用默认参数：-sV')#None 表示没有加参数
+	else:
+		arg =  args.arguments
+		print('使用参数：{}'.format(args.arguments))#None 表示没有加参数
+	#print(type(Port))#<class 'int'>,扫描参数应为字符
+	Port = str(Port)
+	nm = nmap.PortScanner()
+	try:
+		nm.scan(hosts = Host, ports = Port, arguments = arg)
+		#print(arg)
+		#print(nm[Host].hostname()) #'127.0.0.1-10'
+		all_hosts = nm.all_hosts()
+		print('需要扫描的主机列表：{}'.format(all_hosts))#主机ip 的list类型['xx', 'yy', 'zz', ...]
+		for host in nm.all_hosts():
+
+			print('========================================')
+			print('Host : {0} ({1})'.format(host, nm[host].hostname()))
+			print('host state : {0}'.format(nm[host].state()))
+			#print(nm[host].all_protocols())
+			for proto in nm[host].all_protocols():
+				print('---------------')
+				print('Protocol : {0}'.format(proto))
+				lport = list(nm[host][proto].keys())	
+				#print('lport : {}'.format(lport))
+				lport.sort()
+				for aport in lport:
+					print('port : {0}\tstate : {1} {2} {3} {4}'.format(aport, \
+					nm[host][proto][aport]['state'],   \
+					nm[host][proto][aport]['product'], \
+					nm[host][proto][aport]['version'], \
+					nm[host][proto][aport]['extrainfo']))
+
+		print('================It\'s over!==============\n')
+	except Exception as e:
+		print(e)
+
+
+if __name__ == '__main__':
+	main()
+
+############################<<<<<<<<<<<<<上面就是nmap库导入扫描#########################
 		
